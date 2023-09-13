@@ -1,11 +1,5 @@
 import 'package:flutter/material.dart';
-
-class InvoiceItem {
-  String description;
-  double amount;
-
-  InvoiceItem({required this.description, required this.amount});
-}
+import 'package:gov_invoice/models/invoice.dart';
 
 class InvoiceForm extends StatefulWidget {
   const InvoiceForm({super.key});

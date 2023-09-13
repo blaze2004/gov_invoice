@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:gov_invoice/invoice_generator.dart';
+import 'package:gov_invoice/invoice_page.dart';
 import 'package:gov_invoice/login_page.dart';
-import 'package:gov_invoice/splash_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
+  await dotenv.load(fileName: ".env");
   await Supabase.initialize(
-    url: 'supabase_url',
-    anonKey: 'supabase_anon_key',
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
     authFlowType: AuthFlowType.pkce,
   );
   runApp(const GovInvoice());
@@ -28,9 +29,8 @@ class GovInvoice extends StatelessWidget {
       ),
       initialRoute: "/",
       routes: <String, WidgetBuilder>{
-        '/': (_) => const SplashPage(),
+        '/': (_) => const GovInvoicePage(),
         '/login': (_) => const LoginPage(),
-        '/invoice': (_) => const GovInvoicePage(),
       },
       debugShowCheckedModeBanner: false,
     );
