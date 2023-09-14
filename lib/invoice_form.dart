@@ -1,70 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:gov_invoice/models/invoice.dart';
+import 'package:intl/intl.dart';
 
 class InvoiceForm extends StatefulWidget {
-  const InvoiceForm({super.key});
+  const InvoiceForm({super.key, required this.invoice, required this.formKey});
+
+  final Invoice invoice;
+  final GlobalKey<FormState> formKey;
 
   @override
   _InvoiceFormState createState() => _InvoiceFormState();
 }
 
 class _InvoiceFormState extends State<InvoiceForm> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _invoiceDateController = TextEditingController();
-  final TextEditingController _billToNameController = TextEditingController();
-  final TextEditingController _billToCityController = TextEditingController();
-  final TextEditingController _billToZipCodeController =
-      TextEditingController();
-  final TextEditingController _billToPhoneController = TextEditingController();
-  final List<InvoiceItem> _invoiceItems = [];
-  final int _invoiceNumber = 1;
-  double _totalAmount = 0;
-  DateTime _selectedDate = DateTime.now();
+  final DateFormat format = DateFormat("dd-MM-yyyy");
 
-  void _addItem() {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _invoiceItems.add(
-          InvoiceItem(
-            description: "",
-            amount: 0.0,
-          ),
-        );
-      });
-    }
+  @override
+  void initState() {
+    super.initState();
+    _invoiceDateController.text = widget.invoice.invoiceDate;
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-
-    if (picked != null && picked != _selectedDate) {
-      final formattedDate = "${picked.day}-${picked.month}-${picked.year}";
-      setState(() {
-        _selectedDate = picked;
-        _invoiceDateController.text = formattedDate;
-      });
-    }
-  }
-
-  void _setTotalAmount() {
-    double totalAmount = 0;
-    for (var item in _invoiceItems) {
-      totalAmount += item.amount;
-    }
-    setState(() {
-      _totalAmount = totalAmount;
-    });
+  @override
+  void dispose() {
+    _invoiceDateController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final Invoice invoice = widget.invoice;
+    final GlobalKey<FormState> formKey = widget.formKey;
+
+    void addItem() {
+      if (formKey.currentState!.validate()) {
+        setState(() {
+          invoice.items.add(
+            InvoiceItem(
+              description: "",
+              amount: 0.0,
+            ),
+          );
+        });
+      }
+    }
+
+    void setTotalAmount() {
+      double totalAmount = 0;
+      for (var item in invoice.items) {
+        totalAmount += item.amount;
+      }
+      setState(() {
+        invoice.totalAmount = totalAmount;
+      });
+    }
+
+    Future<void> selectDate(BuildContext context) async {
+      final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2101),
+      );
+
+      if (picked != null && picked != format.parse(invoice.invoiceDate)) {
+        final formattedDate = "${picked.day}-${picked.month}-${picked.year}";
+        setState(() {
+          invoice.invoiceDate = formattedDate;
+          _invoiceDateController.text = formattedDate;
+        });
+      }
+    }
+
     return Form(
-      key: _formKey,
+      key: formKey,
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -78,8 +88,33 @@ class _InvoiceFormState extends State<InvoiceForm> {
                 ),
                 const SizedBox(width: 16.0),
                 Text(
-                  _invoiceNumber.toString(),
+                  invoice.invoiceNumber.toString(),
                 ),
+              ],
+            ),
+            Row(
+              children: [
+                const Text(
+                  'Invoice name:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 16.0),
+                Expanded(
+                  child: TextFormField(
+                    initialValue: invoice.filename,
+                    onChanged: (value) {
+                      invoice.filename = value;
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter an invoice name';
+                      }
+                      return null;
+                    },
+                    decoration:
+                        const InputDecoration(hintText: 'Invoice Name'),
+                  ),
+                )
               ],
             ),
             const SizedBox(height: 16.0),
@@ -89,7 +124,7 @@ class _InvoiceFormState extends State<InvoiceForm> {
             ),
             InkWell(
               onTap: () {
-                _selectDate(context);
+                selectDate(context);
               },
               child: IgnorePointer(
                 child: TextFormField(
@@ -121,7 +156,9 @@ class _InvoiceFormState extends State<InvoiceForm> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       TextFormField(
-                        controller: _billToNameController,
+                        onChanged: (value) => {
+                          invoice.billTo.name = value,
+                        },
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter a name';
@@ -131,16 +168,39 @@ class _InvoiceFormState extends State<InvoiceForm> {
                         decoration: const InputDecoration(labelText: 'Name'),
                       ),
                       TextFormField(
-                        controller: _billToCityController,
+                        onChanged: (value) => {
+                          invoice.billTo.city = value,
+                        },
                         decoration: const InputDecoration(labelText: 'City'),
                       ),
                       TextFormField(
-                        controller: _billToZipCodeController,
+                        onChanged: (value) => {
+                          invoice.billTo.zipCode = int.parse(value),
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a zip code';
+                          } else if (value.length != 6) {
+                            return 'Zip code must be 6 digits';
+                          } else if (int.tryParse(value) == null) {
+                            return 'Zip code must be a number';
+                          }
+                          return null;
+                        },
+                        keyboardType: TextInputType.number,
                         decoration:
                             const InputDecoration(labelText: 'Zip Code'),
                       ),
                       TextFormField(
-                        controller: _billToPhoneController,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a phone number';
+                          }
+                          return null;
+                        },
+                        onChanged: (value) => {
+                          invoice.billTo.phoneNumber = value,
+                        },
                         decoration:
                             const InputDecoration(labelText: 'Phone Number'),
                       ),
@@ -157,7 +217,9 @@ class _InvoiceFormState extends State<InvoiceForm> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       TextFormField(
-                        controller: _billToNameController,
+                        onChanged: (value) => {
+                          invoice.from.name = value,
+                        },
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter a name';
@@ -167,16 +229,39 @@ class _InvoiceFormState extends State<InvoiceForm> {
                         decoration: const InputDecoration(labelText: 'Name'),
                       ),
                       TextFormField(
-                        controller: _billToCityController,
+                        onChanged: (value) => {
+                          invoice.from.city = value,
+                        },
                         decoration: const InputDecoration(labelText: 'City'),
                       ),
                       TextFormField(
-                        controller: _billToZipCodeController,
+                        onChanged: (value) => {
+                          invoice.from.zipCode = int.parse(value),
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a zip code';
+                          } else if (value.length != 6) {
+                            return 'Zip code must be 6 digits';
+                          } else if (int.tryParse(value) == null) {
+                            return 'Zip code must be a number';
+                          }
+                          return null;
+                        },
+                        keyboardType: TextInputType.number,
                         decoration:
                             const InputDecoration(labelText: 'Zip Code'),
                       ),
                       TextFormField(
-                        controller: _billToPhoneController,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a phone number';
+                          }
+                          return null;
+                        },
+                        onChanged: (value) => {
+                          invoice.from.phoneNumber = value,
+                        },
                         decoration:
                             const InputDecoration(labelText: 'Phone Number'),
                       ),
@@ -193,15 +278,14 @@ class _InvoiceFormState extends State<InvoiceForm> {
             const SizedBox(height: 16.0),
             ListView.builder(
               shrinkWrap: true,
-              itemCount: _invoiceItems.length,
+              itemCount: invoice.items.length,
               itemBuilder: (context, index) {
                 return Row(
                   children: [
                     Expanded(
                       child: TextFormField(
                         onChanged: (value) {
-                          // Update the description when text changes
-                          _invoiceItems[index].description = value;
+                          invoice.items[index].description = value;
                         },
                         decoration:
                             const InputDecoration(labelText: 'Description'),
@@ -211,9 +295,8 @@ class _InvoiceFormState extends State<InvoiceForm> {
                     Expanded(
                       child: TextFormField(
                         onChanged: (value) {
-                          // Update the amount when text changes
-                          _invoiceItems[index].amount = double.parse(value);
-                          _setTotalAmount();
+                          invoice.items[index].amount = double.parse(value);
+                          setTotalAmount();
                         },
                         decoration: const InputDecoration(labelText: 'Amount'),
                         keyboardType: TextInputType.number,
@@ -225,12 +308,12 @@ class _InvoiceFormState extends State<InvoiceForm> {
             ),
             const SizedBox(height: 16.0),
             ElevatedButton(
-              onPressed: _addItem,
+              onPressed: addItem,
               child: const Text('Add Item'),
             ),
             const SizedBox(height: 32.0),
             Text(
-              'Total Amount: $_totalAmount',
+              'Total Amount: ${invoice.totalAmount}',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
