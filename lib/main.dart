@@ -8,8 +8,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
   await Supabase.initialize(
-    url: dotenv.env['SUPABASE_URL']!,
-    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+    url: 'https://qsmlvycivznfuerrpkgm.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzbWx2eWNpdnpuZnVlcnJwa2dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTQ1NjYzOTMsImV4cCI6MjAxMDE0MjM5M30.aBeb1RM5rw9TxXYNcUPK3RlLBhstUzS8CzUX6oxpbns',
     authFlowType: AuthFlowType.pkce,
   );
   runApp(const GovInvoice());
