@@ -76,13 +76,15 @@ class OptionsPopup extends StatelessWidget {
       }.entries);
 
       if (supabase.auth.currentSession != null) {
-        dynamic data = mapObjectToJson(localInvoiceDataSet,isDB: true,)[invoiceDataKey];
+        dynamic data = mapObjectToJson(
+          localInvoiceDataSet,
+          isDB: true,
+        )[invoiceDataKey];
         data["email"] = supabase.auth.currentSession!.user.email;
-        final response = await supabase.from("invoices").upsert(
-              data,
-            );
-        if (response.error != null) {
-          return "Error saving invoice:";
+        try {
+          await supabase.from("invoice").upsert(data);
+        } catch (error) {
+          print(error.toString());
         }
       }
       await updateLocalInvoiceDataset(localInvoiceDataSet);
@@ -154,7 +156,7 @@ class OptionsPopup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 200,
+      height: 170,
       width: 200,
       child: ListView(
         children: [
@@ -218,6 +220,13 @@ class InvoiceManagerPopup extends StatefulWidget {
 class _InvoiceManagerPopupState extends State<InvoiceManagerPopup> {
   @override
   Widget build(BuildContext context) {
+    Future<void> _deleteInvoiceFromDB(int invoiceNumber) async {
+      try {
+        await supabase.from("invoice").delete().eq("id", invoiceNumber);
+      } catch (error) {
+        print(error.toString());
+      }
+    }
 
     void showDeleteInvoiceWarning(BuildContext context, String invoiceId) {
       showDialog(
@@ -232,6 +241,7 @@ class _InvoiceManagerPopupState extends State<InvoiceManagerPopup> {
                   onPressed: () {
                     setState(() {
                       widget.localInvoiceDataSet.remove(invoiceId);
+                      _deleteInvoiceFromDB(int.parse(invoiceId));
                       updateLocalInvoiceDataset(widget.localInvoiceDataSet);
                     });
 
@@ -251,56 +261,72 @@ class _InvoiceManagerPopupState extends State<InvoiceManagerPopup> {
     }
 
     if (widget.localInvoiceDataSet.isEmpty) {
-      return const Center(
-        child: Text("No invoices found"),
+      return const SizedBox(
+        height: 500,
+        width: 500,
+        child: Center(
+          child: Text("No invoices found"),
+        ),
       );
     }
 
-    List<Widget> gridTiles = [];
-
     final DateFormat format = DateFormat("dd-MM-yyyy HH:mm");
 
-    for (var invoice in widget.localInvoiceDataSet.values) {
-      gridTiles.addAll([
-        GridTile(child: Text(invoice.filename)),
-        GridTile(child: Text(format.format(invoice.updatedDate))),
-        GridTile(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              IconButton(
-                onPressed: () {
-                  widget.editInvoice(invoice.invoiceNumber.toString());
-                  Navigator.of(context).pop();
-                },
-                icon: const Icon(Icons.edit),
-              ),
-              IconButton(
-                onPressed: () {
-                  showDeleteInvoiceWarning(
-                    context,
-                    invoice.invoiceNumber.toString(),
-                  );
-                },
-                icon: const Icon(Icons.delete),
-              ),
-            ],
-          ),
-        ),
-      ]);
-    }
-
     return Container(
-      height: 800,
+      height: 500,
       width: 500,
       padding: const EdgeInsets.all(16.0),
-      child: GridView(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          childAspectRatio: 2.2,
-        ),
-        children: gridTiles,
+      child: ListView(
+        children: [
+          for (var invoice in widget.localInvoiceDataSet.values)
+            Card(
+              margin: const EdgeInsets.all(8.0),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          invoice.filename,
+                          style: const TextStyle(
+                              fontSize: 16.0, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          format.format(invoice.updatedDate),
+                          style: const TextStyle(
+                              fontSize: 12.0, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            widget
+                                .editInvoice(invoice.invoiceNumber.toString());
+                            Navigator.of(context).pop();
+                          },
+                          icon: const Icon(Icons.edit),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            showDeleteInvoiceWarning(
+                              context,
+                              invoice.invoiceNumber.toString(),
+                            );
+                          },
+                          icon: const Icon(Icons.delete),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

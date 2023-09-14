@@ -5,7 +5,6 @@ import 'package:flutter_mailer/flutter_mailer.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:gov_invoice/models/invoice.dart';
-import 'package:flutter_email_sender/flutter_email_sender.dart';
 
 class InvoicePdf {
   final Invoice invoice;

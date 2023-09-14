@@ -101,7 +101,7 @@ class _GovInvoicePageState extends State<GovInvoicePage> {
               amount: item["amount"],
             )
         ],
-        totalAmount: entry.value["totalAmount"],
+        totalAmount: double.parse(entry.value["totalAmount"].toString()),
         filename: entry.value["filename"],
         createdDate:
             DateTime.parse(entry.value[isDB ? "created_at" : "createdDate"]),

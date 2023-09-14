@@ -350,6 +350,14 @@ class _InvoiceFormState extends State<InvoiceForm> {
                           keyboardType: TextInputType.number,
                         ),
                       ),
+                      const SizedBox(height: 16.0),
+                      IconButton(
+                          onPressed: () {
+                            setState(() {
+                              invoice.items.removeAt(index);
+                            });
+                          },
+                          icon: const Icon(Icons.delete)),
                     ],
                   );
                 },
