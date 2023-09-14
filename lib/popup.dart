@@ -289,10 +289,16 @@ class _InvoiceManagerPopupState extends State<InvoiceManagerPopup> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          invoice.filename,
-                          style: const TextStyle(
-                              fontSize: 16.0, fontWeight: FontWeight.bold),
+                        Container(
+                          constraints: const BoxConstraints(maxWidth: 110),
+                          child: Text(
+                            invoice.filename,
+                            style: const TextStyle(
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         Text(
                           format.format(invoice.updatedDate),
