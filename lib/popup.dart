@@ -301,7 +301,7 @@ class _InvoiceManagerPopupState extends State<InvoiceManagerPopup> {
                           ),
                         ),
                         Text(
-                          format.format(invoice.updatedDate),
+                          format.format(invoice.createdDate),
                           style: const TextStyle(
                               fontSize: 12.0, color: Colors.grey),
                         ),
