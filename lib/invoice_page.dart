@@ -23,7 +23,7 @@ Invoice createNewInvoice(int invoiceNumber) {
     invoiceNumber: invoiceNumber,
     invoiceDate: DateFormat("dd-MM-yyyy").format(DateTime.now()),
     billTo: Person(name: "", city: "", zipCode: 000000, phoneNumber: ""),
-    from: Person(name: "1", city: "1", zipCode: 000000, phoneNumber: ""),
+    from: Person(name: "", city: "", zipCode: 000000, phoneNumber: ""),
     items: [],
     totalAmount: 0.0,
   );
@@ -32,8 +32,9 @@ Invoice createNewInvoice(int invoiceNumber) {
 class _GovInvoicePageState extends State<GovInvoicePage> {
   Session? session = supabase.auth.currentSession;
 
-  Invoice invoice = createNewInvoice(1);
+  Invoice _invoice = createNewInvoice(1);
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final GlobalKey _formRepaintKey = GlobalKey();
 
   Map<String, Invoice> localInvoiceDataSet = {};
 
@@ -79,7 +80,7 @@ class _GovInvoicePageState extends State<GovInvoicePage> {
     if (localInvoiceData != null) {
       setState(() {
         localInvoiceDataSet = jsonToMapObject(jsonDecode(localInvoiceData));
-        invoice.invoiceNumber = localInvoiceDataSet.length + 1;
+        _invoice.invoiceNumber = localInvoiceDataSet.length + 1;
       });
     }
   }
@@ -90,8 +91,9 @@ class _GovInvoicePageState extends State<GovInvoicePage> {
         builder: (BuildContext context) {
           return Dialog(
             child: OptionsPopup(
-              invoice: invoice,
+              invoice: _invoice,
               formKey: _formKey,
+              formRepaintKey: _formRepaintKey,
               localInvoiceDataSet: localInvoiceDataSet,
             ),
           );
@@ -105,9 +107,17 @@ class _GovInvoicePageState extends State<GovInvoicePage> {
           return Dialog(
             child: InvoiceManagerPopup(
               localInvoiceDataSet: localInvoiceDataSet,
+              editInvoice: _editInvoice,
             ),
           );
         });
+  }
+
+  void _editInvoice(String invoiceNumber) {
+    _formKey.currentState!.reset();
+    setState(() {
+      _invoice = localInvoiceDataSet[invoiceNumber]!;
+    });
   }
 
   Future<void> _logOut() async {
@@ -139,9 +149,9 @@ class _GovInvoicePageState extends State<GovInvoicePage> {
             onPressed: () {
               Invoice newInvoice =
                   createNewInvoice(localInvoiceDataSet.length + 1);
-              _formKey.currentState!.reset();
               setState(() {
-                invoice = newInvoice;
+                _invoice = newInvoice;
+                _formKey.currentState!.reset();
               });
             },
             icon: const Icon(Icons.add),
@@ -164,8 +174,9 @@ class _GovInvoicePageState extends State<GovInvoicePage> {
         builder: (BuildContext context) {
           return Center(
             child: InvoiceForm(
-              invoice: invoice,
+              invoice: _invoice,
               formKey: _formKey,
+              formRepaintKey: _formRepaintKey,
             ),
           );
         },
