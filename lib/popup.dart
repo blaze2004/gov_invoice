@@ -5,14 +5,15 @@ import 'package:gov_invoice/main.dart';
 import 'package:gov_invoice/models/invoice.dart';
 import 'package:gov_invoice/print_to_pdf.dart';
 import 'package:intl/intl.dart';
+import 'package:open_file_plus/open_file_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Map<String, dynamic> toJson(Map<String, Invoice> dataSet) {
+Map<String, dynamic> mapObjectToJson(Map<String, Invoice> dataSet,
+    {bool isDB = false}) {
   final Map<String, dynamic> data = <String, dynamic>{};
 
   for (var entry in dataSet.entries) {
     data[entry.key] = {
-      "invoiceNumber": entry.value.invoiceNumber,
       "invoiceDate": entry.value.invoiceDate,
       "billTo": {
         "name": entry.value.billTo.name,
@@ -35,9 +36,12 @@ Map<String, dynamic> toJson(Map<String, Invoice> dataSet) {
       ],
       "totalAmount": entry.value.totalAmount,
       "filename": entry.value.filename,
-      "createdDate": entry.value.createdDate.toString(),
       "updatedDate": entry.value.updatedDate.toString(),
     };
+
+    data[entry.key][isDB ? "created_at" : "createdDate"] =
+        entry.value.createdDate.toString();
+    data[entry.key][isDB ? "id" : "invoiceNumber"] = entry.value.invoiceNumber;
   }
   return data;
 }
@@ -45,7 +49,8 @@ Map<String, dynamic> toJson(Map<String, Invoice> dataSet) {
 Future<void> updateLocalInvoiceDataset(
     Map<String, Invoice> localInvoiceDataSet) async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
-  final String localInvoiceData = jsonEncode(toJson(localInvoiceDataSet));
+  final String localInvoiceData =
+      jsonEncode(mapObjectToJson(localInvoiceDataSet));
   await prefs.setString("localInvoiceData", localInvoiceData);
 }
 
@@ -69,6 +74,17 @@ class OptionsPopup extends StatelessWidget {
       localInvoiceDataSet.addEntries({
         invoiceDataKey: invoice,
       }.entries);
+
+      if (supabase.auth.currentSession != null) {
+        dynamic data = mapObjectToJson(localInvoiceDataSet,isDB: true,)[invoiceDataKey];
+        data["email"] = supabase.auth.currentSession!.user.email;
+        final response = await supabase.from("invoices").upsert(
+              data,
+            );
+        if (response.error != null) {
+          return "Error saving invoice:";
+        }
+      }
       await updateLocalInvoiceDataset(localInvoiceDataSet);
       return "Invoice saved successfully.";
     }
@@ -167,13 +183,16 @@ class OptionsPopup extends StatelessWidget {
             leading: const Icon(Icons.print),
             onTap: () {
               Navigator.of(context).pop();
-              InvoicePdf(invoice: invoice)
-                  .savePdf()
-                  .then((value) => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Invoice printed successfully."),
-                        ),
-                      ));
+              InvoicePdf(invoice: invoice).savePdf().then(
+                (value) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Invoice printed successfully."),
+                    ),
+                  );
+                  OpenFile.open(value);
+                },
+              );
             },
           ),
         ],
@@ -199,16 +218,6 @@ class InvoiceManagerPopup extends StatefulWidget {
 class _InvoiceManagerPopupState extends State<InvoiceManagerPopup> {
   @override
   Widget build(BuildContext context) {
-    Map<String, Invoice> localInvoiceDataSet = widget.localInvoiceDataSet;
-
-    Map<String, Invoice> getInvoices() {
-      if (supabase.auth.currentSession != null) {
-        final response = supabase.from("invoices").select();
-        return response as Map<String, Invoice>;
-      } else {
-        return localInvoiceDataSet;
-      }
-    }
 
     void showDeleteInvoiceWarning(BuildContext context, String invoiceId) {
       showDialog(
@@ -222,8 +231,8 @@ class _InvoiceManagerPopupState extends State<InvoiceManagerPopup> {
                 TextButton(
                   onPressed: () {
                     setState(() {
-                      localInvoiceDataSet.remove(invoiceId);
-                      updateLocalInvoiceDataset(localInvoiceDataSet);
+                      widget.localInvoiceDataSet.remove(invoiceId);
+                      updateLocalInvoiceDataset(widget.localInvoiceDataSet);
                     });
 
                     Navigator.of(context).pop();
@@ -241,9 +250,7 @@ class _InvoiceManagerPopupState extends State<InvoiceManagerPopup> {
           });
     }
 
-    final Map<String, Invoice> invoices = getInvoices();
-
-    if (invoices.isEmpty) {
+    if (widget.localInvoiceDataSet.isEmpty) {
       return const Center(
         child: Text("No invoices found"),
       );
@@ -253,7 +260,7 @@ class _InvoiceManagerPopupState extends State<InvoiceManagerPopup> {
 
     final DateFormat format = DateFormat("dd-MM-yyyy HH:mm");
 
-    for (var invoice in invoices.values) {
+    for (var invoice in widget.localInvoiceDataSet.values) {
       gridTiles.addAll([
         GridTile(child: Text(invoice.filename)),
         GridTile(child: Text(format.format(invoice.updatedDate))),
@@ -291,7 +298,7 @@ class _InvoiceManagerPopupState extends State<InvoiceManagerPopup> {
       child: GridView(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
-          childAspectRatio: 3.0,
+          childAspectRatio: 2.2,
         ),
         children: gridTiles,
       ),

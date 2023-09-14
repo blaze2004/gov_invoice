@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gov_invoice/invoice_page.dart';
 import 'package:gov_invoice/login_page.dart';
+import 'package:gov_invoice/splash_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -29,7 +30,8 @@ class GovInvoice extends StatelessWidget {
       ),
       initialRoute: "/",
       routes: <String, WidgetBuilder>{
-        '/': (_) => const GovInvoicePage(),
+        '/': (_) => const SplashPage(),
+        '/invoice': (_) => const GovInvoicePage(),
         '/login': (_) => const LoginPage(),
       },
       debugShowCheckedModeBanner: false,

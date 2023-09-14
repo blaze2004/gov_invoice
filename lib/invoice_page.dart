@@ -38,12 +38,49 @@ class _GovInvoicePageState extends State<GovInvoicePage> {
 
   Map<String, Invoice> localInvoiceDataSet = {};
 
-  Map<String, Invoice> jsonToMapObject(Map<String, dynamic> dataset) {
+  Future<void> _loadFromDB() async {
+    final data = await supabase.from("invoice").select();
+    Map<String, dynamic> invoiceData = {};
+    for (var entry in data as List<dynamic>) {
+      invoiceData[entry["id"].toString()] = entry;
+    }
+    setState(() {
+      localInvoiceDataSet = jsonToMapObject(invoiceData, isDB: true);
+      _invoice.invoiceNumber = localInvoiceDataSet.length + 1;
+    });
+  }
+
+  Future<void> _saveToDB() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    Map<String, dynamic> data =
+        mapObjectToJson(localInvoiceDataSet, isDB: true);
+    data.forEach((key, value) async {
+      value["email"] = session!.user.email;
+      try {
+        await supabase.from("invoice").upsert(value);
+      } on PostgrestException {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Error saving invoices to cloud."),
+          ),
+        );
+      } catch (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Something unexpected happended."),
+          ),
+        );
+      }
+    });
+  }
+
+  Map<String, Invoice> jsonToMapObject(Map<String, dynamic> dataset,
+      {bool isDB = false}) {
     final Map<String, Invoice> data = <String, Invoice>{};
 
     for (var entry in dataset.entries) {
       data[entry.key] = Invoice(
-        invoiceNumber: entry.value["invoiceNumber"],
+        invoiceNumber: entry.value[isDB ? "id" : "invoiceNumber"],
         invoiceDate: entry.value["invoiceDate"],
         billTo: Person(
           name: entry.value["billTo"]["name"],
@@ -66,7 +103,8 @@ class _GovInvoicePageState extends State<GovInvoicePage> {
         ],
         totalAmount: entry.value["totalAmount"],
         filename: entry.value["filename"],
-        createdDate: DateTime.parse(entry.value["createdDate"]),
+        createdDate:
+            DateTime.parse(entry.value[isDB ? "created_at" : "createdDate"]),
         updatedDate: DateTime.parse(entry.value["updatedDate"]),
       );
     }
@@ -130,7 +168,11 @@ class _GovInvoicePageState extends State<GovInvoicePage> {
   @override
   void initState() {
     super.initState();
-    _loadLocalInvoiceData();
+    _loadLocalInvoiceData().then((value) {
+      if (session != null) {
+        _saveToDB().then((value) => _loadFromDB());
+      }
+    });
   }
 
   @override

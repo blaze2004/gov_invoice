@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter_mailer/flutter_mailer.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:gov_invoice/models/invoice.dart';
@@ -106,21 +107,21 @@ class InvoicePdf {
   Future<String> sendEmailWithPDF(String recipientEmail) async {
     final String pdfPath = await savePdf();
 
-    final Email email = Email(
+    final MailOptions email = MailOptions(
       body: 'Invoice attached.',
       subject: 'Invoice',
       recipients: [
         recipientEmail,
       ],
-      attachmentPaths: [pdfPath],
+      attachments: [pdfPath],
       isHTML: false,
     );
 
     try {
-      await FlutterEmailSender.send(email);
+      await FlutterMailer.send(email);
       return "Email sent successfully.";
     } catch (error) {
-      return "Error sending email.";
+      return error.toString();
     }
   }
 }

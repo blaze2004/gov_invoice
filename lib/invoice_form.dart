@@ -108,7 +108,7 @@ class _InvoiceFormState extends State<InvoiceForm> {
                   const SizedBox(width: 16.0),
                   Expanded(
                     child: TextFormField(
-                      initialValue: invoice.filename,
+                      controller: TextEditingController(text: invoice.filename),
                       onChanged: (value) {
                         invoice.filename = value;
                       },
@@ -118,7 +118,8 @@ class _InvoiceFormState extends State<InvoiceForm> {
                         }
                         return null;
                       },
-                      decoration: const InputDecoration(hintText: 'Invoice Name'),
+                      decoration:
+                          const InputDecoration(hintText: 'Invoice Name'),
                     ),
                   )
                 ],
@@ -172,18 +173,24 @@ class _InvoiceFormState extends State<InvoiceForm> {
                             return null;
                           },
                           decoration: const InputDecoration(labelText: 'Name'),
-                          initialValue: invoice.billTo.name,
+                          controller:
+                              TextEditingController(text: invoice.billTo.name),
+                          keyboardType: TextInputType.name,
                         ),
                         TextFormField(
                           onChanged: (value) => {
                             invoice.billTo.city = value,
                           },
                           decoration: const InputDecoration(labelText: 'City'),
-                          initialValue: invoice.billTo.city,
+                          controller:
+                              TextEditingController(text: invoice.billTo.city),
                         ),
                         TextFormField(
                           onChanged: (value) => {
-                            invoice.billTo.zipCode = int.parse(value),
+                            if (int.tryParse(value) != null)
+                              {
+                                invoice.billTo.zipCode = int.parse(value),
+                              }
                           },
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -198,7 +205,10 @@ class _InvoiceFormState extends State<InvoiceForm> {
                           keyboardType: TextInputType.number,
                           decoration:
                               const InputDecoration(labelText: 'Zip Code'),
-                          initialValue: invoice.billTo.zipCode.toString(),
+                          controller: TextEditingController(
+                              text: invoice.billTo.zipCode == 0
+                                  ? null
+                                  : invoice.billTo.zipCode.toString()),
                         ),
                         TextFormField(
                           validator: (value) {
@@ -212,7 +222,9 @@ class _InvoiceFormState extends State<InvoiceForm> {
                           },
                           decoration:
                               const InputDecoration(labelText: 'Phone Number'),
-                          initialValue: invoice.billTo.phoneNumber,
+                          controller: TextEditingController(
+                              text: invoice.billTo.phoneNumber),
+                          keyboardType: TextInputType.phone,
                         ),
                       ],
                     ),
@@ -237,18 +249,24 @@ class _InvoiceFormState extends State<InvoiceForm> {
                             return null;
                           },
                           decoration: const InputDecoration(labelText: 'Name'),
-                          initialValue: invoice.from.name,
+                          controller:
+                              TextEditingController(text: invoice.from.name),
+                          keyboardType: TextInputType.name,
                         ),
                         TextFormField(
                           onChanged: (value) => {
                             invoice.from.city = value,
                           },
                           decoration: const InputDecoration(labelText: 'City'),
-                          initialValue: invoice.from.city,
+                          controller:
+                              TextEditingController(text: invoice.from.city),
                         ),
                         TextFormField(
                           onChanged: (value) => {
-                            invoice.from.zipCode = int.parse(value),
+                            if (int.tryParse(value) != null)
+                              {
+                                invoice.from.zipCode = int.parse(value),
+                              }
                           },
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -263,7 +281,10 @@ class _InvoiceFormState extends State<InvoiceForm> {
                           keyboardType: TextInputType.number,
                           decoration:
                               const InputDecoration(labelText: 'Zip Code'),
-                          initialValue: invoice.from.zipCode.toString(),
+                          controller: TextEditingController(
+                              text: invoice.from.zipCode == 0
+                                  ? null
+                                  : invoice.from.zipCode.toString()),
                         ),
                         TextFormField(
                           validator: (value) {
@@ -277,7 +298,9 @@ class _InvoiceFormState extends State<InvoiceForm> {
                           },
                           decoration:
                               const InputDecoration(labelText: 'Phone Number'),
-                          initialValue: invoice.from.phoneNumber,
+                          controller: TextEditingController(
+                              text: invoice.from.phoneNumber),
+                          keyboardType: TextInputType.phone,
                         ),
                       ],
                     ),
@@ -298,7 +321,9 @@ class _InvoiceFormState extends State<InvoiceForm> {
                     children: [
                       Expanded(
                         child: TextFormField(
-                          initialValue: invoice.items[index].description,
+                          controller: TextEditingController(
+                            text: invoice.items[index].description,
+                          ),
                           onChanged: (value) {
                             invoice.items[index].description = value;
                           },
@@ -309,12 +334,19 @@ class _InvoiceFormState extends State<InvoiceForm> {
                       const SizedBox(width: 16.0),
                       Expanded(
                         child: TextFormField(
-                          initialValue: invoice.items[index].amount.toString(),
+                          controller: TextEditingController(
+                            text: invoice.items[index].amount == 0.0
+                                ? null
+                                : invoice.items[index].amount.toString(),
+                          ),
                           onChanged: (value) {
-                            invoice.items[index].amount = double.parse(value);
-                            setTotalAmount();
+                            if (double.tryParse(value) != null) {
+                              invoice.items[index].amount = double.parse(value);
+                              setTotalAmount();
+                            }
                           },
-                          decoration: const InputDecoration(labelText: 'Amount'),
+                          decoration:
+                              const InputDecoration(labelText: 'Amount'),
                           keyboardType: TextInputType.number,
                         ),
                       ),
