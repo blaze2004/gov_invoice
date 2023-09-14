@@ -179,7 +179,17 @@ class _GovInvoicePageState extends State<GovInvoicePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gov Invoice'),
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/logo.png',
+              width: 42,
+              height: 42,
+            ),
+            const SizedBox(width: 8),
+            const Text('Gov Invoice'),
+          ],
+        ),
         actions: [
           IconButton(
             onPressed: () {

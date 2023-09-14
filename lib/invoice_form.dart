@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gov_invoice/main.dart';
 import 'package:gov_invoice/models/invoice.dart';
 import 'package:intl/intl.dart';
 
@@ -87,6 +88,31 @@ class _InvoiceFormState extends State<InvoiceForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              supabase.auth.currentSession == null
+                  ? const Card(
+                      elevation: 4,
+                      child: Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                            ),
+                            SizedBox(width: 12),
+                            Text(
+                              'Sign in to save your invoices.',
+                              style: TextStyle(
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : const SizedBox(
+                      height: 0,
+                    ),
+              const SizedBox(height: 16.0),
               Row(
                 children: [
                   const Text(

@@ -1,16 +1,15 @@
-# gov_invoice
+# Gov Invoice 
+A cross platform application to generate Invices.
 
-A new Flutter project.
+## Features
+* Magic Link Authentication
+* Invoice Storage
+    * Invoices are stored locally when user is not signed in.
+    * Invoices are synced to database when user is signed in.
+* Print Invoice to Pdf.
+* Share Invoice pdf with email.
 
-## Getting Started
+# Important Links
+**Presentation**: [https://drive.google.com/file/d/1v5bWKz1QZjFxYlutLTZLXC2gsbie-yN-/view?usp=drivesdk](https://drive.google.com/file/d/1v5bWKz1QZjFxYlutLTZLXC2gsbie-yN-/view?usp=drivesdk)
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+**Demo Video**: [Watch here]()
