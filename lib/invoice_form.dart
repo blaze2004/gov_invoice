@@ -16,7 +16,7 @@ class InvoiceForm extends StatefulWidget {
   final GlobalKey formRepaintKey;
 
   @override
-  _InvoiceFormState createState() => _InvoiceFormState();
+  State<InvoiceForm> createState() => _InvoiceFormState();
 }
 
 class _InvoiceFormState extends State<InvoiceForm> {

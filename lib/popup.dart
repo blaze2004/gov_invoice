@@ -68,7 +68,7 @@ class OptionsPopup extends StatelessWidget {
   final GlobalKey formRepaintKey;
   final Map<String, Invoice> localInvoiceDataSet;
 
-  Future<String> _saveInvoice() async {
+  Future<String> _saveInvoice(BuildContext context) async {
     if (formKey.currentState!.validate()) {
       final String invoiceDataKey = invoice.invoiceNumber.toString();
       localInvoiceDataSet.addEntries({
@@ -84,7 +84,11 @@ class OptionsPopup extends StatelessWidget {
         try {
           await supabase.from("invoice").upsert(data);
         } catch (error) {
-          print(error.toString());
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Error saving invoice to cloud."),
+            ),
+          );
         }
       }
       await updateLocalInvoiceDataset(localInvoiceDataSet);
@@ -164,7 +168,7 @@ class OptionsPopup extends StatelessWidget {
             title: const Text("Save"),
             leading: const Icon(Icons.save),
             onTap: () {
-              _saveInvoice()
+              _saveInvoice(context)
                   .then((value) => ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(value),
@@ -220,11 +224,13 @@ class InvoiceManagerPopup extends StatefulWidget {
 class _InvoiceManagerPopupState extends State<InvoiceManagerPopup> {
   @override
   Widget build(BuildContext context) {
-    Future<void> _deleteInvoiceFromDB(int invoiceNumber) async {
+    Future<void> deleteInvoiceFromDB(int invoiceNumber) async {
       try {
         await supabase.from("invoice").delete().eq("id", invoiceNumber);
       } catch (error) {
-        print(error.toString());
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error deleting invoice from cloud.")),
+        );
       }
     }
 
@@ -241,7 +247,7 @@ class _InvoiceManagerPopupState extends State<InvoiceManagerPopup> {
                   onPressed: () {
                     setState(() {
                       widget.localInvoiceDataSet.remove(invoiceId);
-                      _deleteInvoiceFromDB(int.parse(invoiceId));
+                      deleteInvoiceFromDB(int.parse(invoiceId));
                       updateLocalInvoiceDataset(widget.localInvoiceDataSet);
                     });
 
